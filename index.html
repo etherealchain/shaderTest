@@ -1,0 +1,87 @@
+<!DOCTYPE HTML>
+<html lang="en">
+	<head>
+		<title>three.js canvas - geometry - cube</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;"/>
+		<style type="text/css">
+			body {
+				background-color: #f0f0f0;
+				margin: 0px;
+				overflow: hidden;
+			}
+		</style>
+	</head>
+	<body>
+		<script id="distanceFieldvs" type="x-shader/x-vertex">
+			varying vec2 v_uv;
+                
+			void main()
+			{
+				v_uv = uv;
+				gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );;
+			}
+		</script>
+
+		<script id="distanceFieldfs" type="x-shader/x-fragment">
+			varying vec2 v_uv;
+    
+			void main( void ) {
+				vec2 uv = v_uv;
+				// Zooms out by a factor of 2.0
+				uv *= 2.0;
+				// Shifts every axis by -1.0
+				uv -= 1.0;
+				
+				// Base color for the effect
+				vec3 color = vec3 ( .2, 1., 0. );
+			
+				// specify size of border. 0.0 - no border, 1.0 - border occupies the entire space
+				vec2 borderSize = vec2(0.3); 
+			
+				// size of rectangle in terms of uv 
+				vec2 rectangleSize = vec2(1.0) - borderSize; 
+			
+				// distance field, 0.0 - point is inside rectangle, 1.0 point is on the far edge of the border.
+				float distanceField = length(max(abs(uv)-rectangleSize,0.0) / borderSize);
+				
+				// calculate alpha accordingly to the value of the distance field
+				float alpha = 1.0 - distanceField;
+			
+				gl_FragColor = vec4(color, alpha);    
+			}
+		</script>
+
+		<script id="glowvs" type="x-shader/x-vertex">
+		uniform vec3 viewVector;
+		uniform float c;
+		uniform float p;
+		varying float intensity;
+		void main() 
+		{
+			vec3 vNormal = normalize( normalMatrix * normal );
+			vec3 vNormel = normalize( normalMatrix * viewVector );
+			intensity = pow( c - dot(vNormal, vNormel), p );
+			
+			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+		}
+		</script>
+
+		<script id="glowfs" type="x-shader/x-vertex"> 
+		uniform vec3 glowColor;
+		varying float intensity;
+		void main() 
+		{
+			vec3 glow = glowColor * intensity;
+			gl_FragColor = vec4( glow, 1.0 );
+		}
+		</script>
+
+		<!-- include javascript files -->
+		<script src="libs/three.min.js"></script>
+		<script src="libs/stats.min.js"></script>
+		<script src="libs/SubdivisionModifier.js"></script>
+		<script src="shadertest.js"></script>
+
+	</body>
+</html>
